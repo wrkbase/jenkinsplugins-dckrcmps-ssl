@@ -1,0 +1,43 @@
+version: "3.9"
+services:
+
+  jenkins:
+    # default ports 8080, 50000 - expose mapping as needed to host
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    container_name: my-jenkins
+    restart: unless-stopped
+    networks:
+      - jenkinsnet
+    ports:
+      - "50000:50000"
+    environment:
+      # Uncomment JENKINS_OPTS to add prefix: e.g. https://127.0.0.1:8443/jenkins
+      #- JENKINS_OPTS="--prefix=/jenkins"
+      - JENKINS_UID=1000
+      - JENKINS_GID=1000
+    volumes:
+      - ./jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  nginx:
+    # default ports 80, 443 - expose mapping as needed to host
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: my-nginx
+    restart: unless-stopped
+    networks:
+      - jenkinsnet
+    ports:
+      - "80:80"    # http
+      - "443:443"   # https
+    volumes:
+      - ./jenkins_home:/var/jenkins_home
+      - ./log/nginx:/var/log/nginx
+
+networks:
+  jenkinsnet:
+    name: my-jenkins
+    driver: bridge
